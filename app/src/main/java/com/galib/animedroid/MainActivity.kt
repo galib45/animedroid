@@ -1,12 +1,15 @@
 package com.galib.animedroid
 
 import android.os.Bundle
+import android.util.Log
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.ImeAction
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
@@ -71,14 +75,19 @@ class MainActivity : ComponentActivity() {
                     AppBar(appName, onSearchIconClick = { isSearchBarVisible = true })
                     AnimatedVisibility(
                         visible = isSearchBarVisible,
-                        enter = expandHorizontally(),
-                        exit = shrinkHorizontally()
+                        enter = expandHorizontally(animationSpec = tween(durationMillis = 500)) + fadeIn(animationSpec = tween(durationMillis = 500)),
+                        exit = shrinkHorizontally(animationSpec = tween(durationMillis = 500)) + fadeOut(animationSpec = tween(durationMillis = 500))
                     ) {
                         SearchBar(
-                            text, { text = it }, 
+                            text, onTextChange = { text = it }, 
                             onCloseIconClick = {
                                 if (text.isNotEmpty()) text = ""
                                 else isSearchBarVisible = false
+                            }, onSearch = {
+                                if (text.isNotEmpty()) {
+                                    Log.i(appName, "Searching for \"$text\"")
+                                    text = ""; isSearchBarVisible = false
+                                }
                             }
                         )
                     }
@@ -125,6 +134,7 @@ fun SearchBar(
     text: String,
     onTextChange: (String) -> Unit,
     onCloseIconClick: () -> Unit,
+    onSearch: () -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -141,7 +151,8 @@ fun SearchBar(
             SearchField(
                 text = text, 
                 onTextChange = onTextChange,
-                onCloseIconClick = onCloseIconClick
+                onCloseIconClick = onCloseIconClick,
+                onSearch = onSearch
             )
         }
     }
@@ -153,6 +164,7 @@ fun SearchField(
     text: String,
     onTextChange: (String) -> Unit,
     onCloseIconClick: () -> Unit,
+    onSearch: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     
@@ -175,6 +187,14 @@ fun SearchField(
                 )
             }
         },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.Search // Set IME action to Search
+        ),
+        keyboardActions = KeyboardActions(
+            onSearch = { 
+                onSearch() // Handle the search action
+            }
+        ),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
