@@ -3,6 +3,8 @@ package com.galib.animedroid
 import android.os.Bundle
 import android.util.Log
 
+import kotlinx.coroutines.launch
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -38,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -68,9 +71,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AnimeDroidTheme {
-                val appName = getString(R.string.app_name);
+                val appName = getString(R.string.app_name)
+                val scope = rememberCoroutineScope()
                 var isSearchBarVisible by remember { mutableStateOf(false) }
                 var text by remember { mutableStateOf("") }
+                var displayText by remember { mutableStateOf("") }
                 Scaffold(topBar = {
                     AppBar(appName, onSearchIconClick = { isSearchBarVisible = true })
                     AnimatedVisibility(
@@ -85,8 +90,14 @@ class MainActivity : ComponentActivity() {
                                 else isSearchBarVisible = false
                             }, onSearch = {
                                 if (text.isNotEmpty()) {
-                                    Log.i(appName, "Searching for \"$text\"")
+                                    val animeName = text
                                     text = ""; isSearchBarVisible = false
+                                    displayText = "Searching for \"$animeName\""
+                                    //Log.i(appName, displayText)
+                                    scope.launch { 
+                                        displayText = searchAnime(animeName)
+                                        //Log.i(appName, displayText)
+                                    }
                                 }
                             }
                         )
@@ -97,7 +108,7 @@ class MainActivity : ComponentActivity() {
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text, fontSize = 24.sp)
+                        Text(displayText)
                     }
                 }
             }

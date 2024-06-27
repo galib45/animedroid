@@ -3,12 +3,23 @@ package com.galib.animedroid
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
+import kotlinx.serialization.json.Json
 
-val client = HttpClient(CIO) {
-    install(Logging) {
-        level = LogLevel.INFO
+val client = HttpClient(CIO) {}
+val json = Json { ignoreUnknownKeys = true }
+
+suspend fun searchAnime(animeName: String): String {
+    return try {
+        val url = "https://api.jikan.moe/v4/anime"
+        val response: String = client.get {
+            url(url)
+            parameter("q", animeName)
+        }.body()
+        val root = json.decodeFromString<Root>(response)
+        "Total ${root.pagination.items.total} search results for \"$animeName\""
+    } catch (e: Exception) {
+        "Error searching for \"$animeName\": ${e.message}"
     }
 }
 
